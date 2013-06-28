@@ -1,0 +1,21 @@
+{
+  "name": "loada",
+  "version": "0.0.1",
+  "description": "Browser assets preloader with the support of localStorage-based caching and progress tracking",
+  "repository": "",
+  "keywords": [
+    "browser",
+    "preloader",
+    "assets"
+  ],
+  "author": "Boris Staal",
+  "license": "MIT",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-coffee": "~0.7.0",
+    "grunt-contrib-jasmine": "~0.5.1",
+    "grunt-contrib-connect": "~0.3.0",
+    "grunt-release": "~0.3.5",
+    "grunt-coffeelint": "0.0.6"
+  }
+}
