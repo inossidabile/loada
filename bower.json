@@ -1,7 +1,7 @@
 {
   "name": "loada",
-  "version": "0.1.0",
-  "main": "lib/loada.js",
+  "version": "0.1.1",
+  "main": "lib/loada.min.js",
   "ignore": [
     "Gruntfile.coffee",
     "package.json"
