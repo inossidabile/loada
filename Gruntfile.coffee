@@ -68,7 +68,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'test', ['coffee', 'connect', 'coffeelint', 'jasmine', 'bowerize']
 
-  grunt.registerTask 'publish', ['test', 'publish:ensureCommits', 'release', 'publish:gem']
+  grunt.registerTask 'publish', ['test', 'publish:ensureCommits', 'release']
 
   grunt.registerTask 'bowerize', ->
     bower = require './bower.json'

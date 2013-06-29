@@ -7,7 +7,7 @@ The kickass in-browser assets (JS/CSS/Text) loader with the support of localStor
 
 Use it to:
 
-  * Make beautiful preloader of the big RICH browser application
+  * Make beautiful preloader of a big RICH browser application
   * Manually control assets cache
   * Preload and manage your code partially in the background (templates, extensions, etc...)
 
@@ -45,7 +45,7 @@ loader.require {url: 'http://../facebook.js', localStorage: false}
 According to our requires, the assets will be loaded in the following groups (:
 
   * **/assets/application.css** in parallel with
-  * (**/assets/jquery.js** and then **/assets/appliation.js**) in parallel with
+  * ( **/assets/jquery.js** and then **/assets/appliation.js** ) in parallel with
   * **http://../facebook.js**
 
 And now that we have our dependencies specified, load'em!
@@ -63,13 +63,13 @@ loader.load
 
 The Loada will try to make progress ticks as often as possible. There are some things you should keep in mind to sort it out though:
 
-  * You can pass in `size` option to the asset options to specify download size. This is the most efficient scenario so if you have a chance to count size programmatically – do that.
+  * You can pass in `size` to the asset options to specify download size. This is the most efficient scenario so if you have a chance to count size programmatically – do that.
   * The Loada will run separate `HEAD` query  for every asset with unknown size expecting server to return `Content-Length`.
   * During downloading it will tick exact percentage for assets with known size and two points at start and finish for every other.
 
 So in the worst case when The Loada was not able to find sizes from any source, you will get percentage split to the number of loading assets. In the best case, when all sizes are known, ticks will happen every 100ms and will be pretty detailed.
 
-**Important note**: The Loada WILL NOT do separate `HEAD` queries unless you pass `progress` callback. So if you don't need the progress tracking feature – you won't get the overhead. In the case when you passed `progress` in and still want to avoid `HEAD` queries (resulting into "per-library" percentage), pass `0` as the `size` value to every asset.
+**Important note**: The Loada WILL NOT make separate `HEAD` queries unless you pass `progress` callback. So if you don't need the progress tracking feature – you are not hitting the overhead. In the case when you passed `progress` in and still want to avoid `HEAD` queries (resulting into "per-library" percentage), pass `0` as the `size` value to every asset.
 
 ## Options and Methods
 
@@ -102,7 +102,7 @@ set.require
   * **url**: URL to download asset from
   * **key**: key to use to store asset within the set (defaults to `url`)
   * **type**: type of the asset: `css`, `js` or `text` (The Loada tries to parse URL to get extension if omitted)
-  * **revision**: asset revision to control cache expiration manually – cache will get busted if new values doesn't match the stored one
+  * **revision**: asset revision to control cache expiration manually – cache will get busted if new value of this option doesn't match the stored one
   * **expires**: number of hours to keep asset for (defaults to forever cache)
   * **cache**: pass `false` in to turn localStorage caching off for this particular asset
   * **require**: whether asset should be automatically required or just downloaded and cached
@@ -137,3 +137,11 @@ set.clear()
 ## History
 
 Loada is an extraction from [Joosy](http://joosy.ws) core.
+
+## Credits
+
+* Boris Staal ([@_inossidabile](http://twitter.com/#!/_inossidabile)) [![endorse](http://api.coderwall.com/inossidabile/endorsecount.png)](http://coderwall.com/inossidabile)
+
+## LICENSE
+
+It is free software, and may be redistributed under the terms of MIT license.
