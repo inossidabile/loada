@@ -4,6 +4,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-jasmine'
   grunt.loadNpmTasks 'grunt-contrib-watch'
+  grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-release'
 
@@ -57,6 +58,11 @@ module.exports = (grunt) ->
           specs: ".grunt/spec/**/*_spec.js"
           helpers: ".grunt/spec/helpers/**/*.js"
         src: "lib/loada.js"
+
+    uglify:
+      core:
+        files:
+          'lib/loada.min.js': 'lib/loada.js'
 
   grunt.registerTask 'default', ['coffee', 'connect', 'jasmine:core:build', 'watch']
 

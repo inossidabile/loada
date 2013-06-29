@@ -1,5 +1,10 @@
 $head = document.getElementsByTagName("head")[0]
 
+#
+# Loada is the kickass javascript loader supporting localStorage and progress tracking.
+#
+# @see https://github.com/inossidabile/loada/
+#
 class @Loada
   Progress: class
     constructor: (@count, @progressCallback) ->
@@ -15,11 +20,6 @@ class @Loada
       total
 
   #
-  # localStorage cache entries keys are prefixed with this value
-  #
-  prefix: 'loada'
-
-  #
   # Alias for the #{constructor}
   #
   @set: ->
@@ -28,9 +28,10 @@ class @Loada
   #
   # @param [String]   Name of the libraries set
   # @param [Object]
-  #  
+  #
   constructor: (@set, options) ->
     @options =
+      prefix: 'loada'
       localStorage: true
 
     @requires =
@@ -40,25 +41,47 @@ class @Loada
 
     @set ||= '*'
     @options[k] = v for k,v of options if options
+    @key = "#{@options.prefix}.#{@set}"
+
     @setup()
 
+  #
+  # Loads current available cache for the current set into the instance
+  #
   setup: ->
     if @options.localStorage
-      @storage = localStorage[@key()] || {}
+      @storage = localStorage[@key] || {}
 
       if typeof(@storage) == 'string'
-        @storage = JSON.parse(localStorage[@key()])
+        @storage = JSON.parse(localStorage[@key])
 
-  key: -> "#{@prefix}.#{@set}"
-
+  #
+  # Saves current set state to localStorage
+  #
   save: ->
-    localStorage[@key()] = JSON.stringify @storage
+    localStorage[@key] = JSON.stringify @storage
 
-  clear: -> delete localStorage[@key()]
+  #
+  # Removes localStorage entry bound to current set
+  #
+  clear: -> delete localStorage[@key]
 
+  #
+  # Gets raw source of an asset
+  #
+  # @param key [String]       Key of the asset
+  #
   get: (key) ->
     @storage[key]?.source
 
+  #
+  # Cleans up current state
+  #
+  # Removes entries that are:
+  #   * expired by date (`expires` option)
+  #   * got new revision (`revision` option)
+  #   * not found in the current requires list
+  #
   expire: ->
     now = new Date
 
@@ -76,12 +99,32 @@ class @Loada
       if byDate(library) || byExistance(library) || byRevision(library)
         delete @storage[key]
 
-  require: (libraries) ->
-    libraries = [libraries] unless libraries instanceof Array
-
+  #
+  # Adds library that should be loaded
+  #
+  # All the libraries passed within one call will be loaded
+  # successive. Separate {#require} calls are loading in parallel.
+  #
+  # Library object consists of the following options:
+  #   * **url**: location of the asset to load
+  #   * **key**: storage key (default to url)
+  #   * **type**: js/css (defaults to url extension parsing)
+  #   * **revision**: manual revision number – triggers cache bust whenever it changes
+  #   * **expires**: amount of hours to keep entry for (defaults to unlimited cache)
+  #   * **cache**: whether localStorage should be used for particular asset
+  #   * **size**: asset download size (defaults to additional HEAD request result)
+  #
+  # @param libraries [Object]     Library object
+  #
+  require: (libraries...) ->
     for library in libraries
       library.key  ||= library.url
       library.type ||= library.url?.split('.').pop()
+      library.cache  = true unless library.cache?
+
+      if library.expires
+        now = new Date
+        library.expirationDate = now.setTime(now.getTime() + library.expires*60*60*1000)
 
       if library.type == 'js' || library.type == 'css'
         @requires.set[library.key] = library
@@ -91,14 +134,23 @@ class @Loada
     @requires.length += libraries.length
     @requires.input.push libraries
 
-  load: (callback) ->
-    callback ||= {}
+  #
+  # Starts the inclusion of required libraries
+  #
+  # Accepts following options:
+  #   * **success**: gets called as soon as all the assets are loaded
+  #   * **progress(percent)**: ticks from time to time passing you curent download progress
+  #
+  # @param [Object] callbacks       List of callbacks
+  #
+  load: (callbacks) ->
+    callbacks ||= {}
     @expire() if @options.localStorage
 
-    progress = new @Progress(@requires.length, callback.progress)
+    progress = new @Progress(@requires.length, callbacks.progress)
     loaders  = 0
 
-    @_ensureSizes callback.progress?, =>
+    @_ensureSizes callbacks.progress?, =>
       for group in @requires.input
         loaders++
 
@@ -106,8 +158,16 @@ class @Loada
           loaders--
           if loaders == 0
             @save()
-            callback.success?()
+            callbacks.success?()
 
+  #
+  # Ensures every asset has 'size' option
+  #
+  # Runs HEAD request trying to parse Content-Length header for
+  # those that don't have.
+  #
+  # @private
+  #
   _ensureSizes: (perform, callback) ->
     unless perform
       library.size = 0 for key, library of @requires.set
@@ -127,12 +187,17 @@ class @Loada
             library.size = size || 0
             callback() if requests == 0
 
+  #
+  # Loads one require group successively
+  #
+  # @private
+  #
   _loadGroup: (group, progress, callback) =>
     library = group.shift()
 
     return callback() unless library
 
-    if @options.localStorage && @storage[library.key]
+    if @options.localStorage && @storage[library.key] && library.cache
       progress?.set library.key, 100
       @_inject @storage[library.key]
       @_loadGroup group, progress, callback
@@ -147,7 +212,11 @@ class @Loada
         @_inject library
         @_loadGroup group, progress, callback
 
-
+  #
+  # Loads one asset by AJAX query and stores it into instance
+  #
+  # @private
+  #
   _loadAJAX: (library, progress, callback) ->
     xhr = @_ajax 'GET', library.url, (xhr) =>
       library.source = xhr.responseText
@@ -162,6 +231,11 @@ class @Loada
       ),
       100
 
+  #
+  # Loads one asset by inlining it into DOM
+  #
+  # @private
+  #
   _loadInline: (library, progress, callback) ->
     if library.type != 'js'
       console.error "Attempt to load something other than JS without localStorage."
@@ -184,6 +258,11 @@ class @Loada
     script.src = library.url
     $head.appendChild script
 
+  #
+  # Activates downloaded asset
+  #
+  # @private
+  #
   _inject: (library) ->
     if library.type == 'js'
       script = document.createElement "script"
@@ -195,6 +274,11 @@ class @Loada
       style.innerHTML = library.source
       $head.appendChild style
 
+  #
+  # Starring custom XHR wrapper!
+  #
+  # @private
+  #
   _ajax: (method, url, callback) ->
     if window.XMLHttpRequest
       xhr = new XMLHttpRequest

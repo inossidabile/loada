@@ -151,6 +151,7 @@ describe "Loada", ->
           key: 'foo.js'
           type: 'js'
           source: 'foobar'
+          cache: true
 
         expect(@server.requests.length).toEqual 1
         expect(@set.storage['foo.js']).toEqual library
@@ -159,10 +160,10 @@ describe "Loada", ->
         expect(@set._inject.args[0][0]).toEqual library
 
     it "orders properly", ->
-      @set.require [
+      @set.require(
         { url: 'foo.js' },
         { url: 'bar.js' }
-      ]
+      )
       @set.require url: 'baz.js'
 
       @set._loadGroup @set.requires.input[0], null, ->
@@ -191,10 +192,10 @@ describe "Loada", ->
           'bar.js': {}
 
         @set.setup()
-        @set.require [
+        @set.require(
           { url: 'foo.js' },
           { url: 'bar.js' }
-        ]
+        )
 
         @set._loadGroup @set.requires.input[0], progress, ->
 
@@ -205,10 +206,10 @@ describe "Loada", ->
       it "tracks with net", ->
         progress = {set: sinon.spy()}
 
-        @set.require [
+        @set.require(
           { url: 'foo.js' },
           { url: 'bar.js' }
-        ]
+        )
 
         @set._loadGroup @set.requires.input[0], progress, ->
 
