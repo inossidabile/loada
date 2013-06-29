@@ -68,7 +68,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'test', ['coffee', 'connect', 'coffeelint', 'jasmine', 'bowerize']
 
-  grunt.registerTask 'publish', ['test', 'publish:ensureCommits', 'release']
+  grunt.registerTask 'publish', ['test', 'publish:ensureCommits', 'release', 'publish:gem']
 
   grunt.registerTask 'bowerize', ->
     bower = require './bower.json'
@@ -88,3 +88,19 @@ module.exports = (grunt) ->
         complete false
       else
         complete true
+
+  grunt.registerTask 'publish:gem', ->
+    meta     = require './package.json'
+    complete = @async()
+
+    grunt.util.spawn {cmd: "gem", args: ["build", "loada.gemspec"]}, (error, result) ->
+      return complete false if error
+
+      gem = "loada-#{meta.version.replace('-', '.')}.gem"
+      grunt.log.ok "Built #{gem}"
+
+      grunt.util.spawn {cmd: "gem", args: ["push", gem]}, (error, result) ->
+        return complete false if error
+        grunt.log.ok "Published #{gem}"
+        grunt.file.delete gem
+        complete(true)

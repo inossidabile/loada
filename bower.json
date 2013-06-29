@@ -1,13 +1,16 @@
 {
   "name": "loada",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "lib/loada.min.js",
   "ignore": [
     "Gruntfile.coffee",
     "package.json",
     "spec",
     ".travis.yml",
-    ".gitignore"
+    ".gitignore",
+    "lib/loada.rb",
+    "loada.gemspec",
+    "Gemfile"
   ],
   "devDependencies": {
     "sinonjs": "~1.7.1"
