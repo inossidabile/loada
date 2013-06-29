@@ -122,12 +122,13 @@ class @Loada
       library.key  ||= library.url
       library.type ||= library.url?.split('.').pop()
       library.localStorage = true unless library.localStorage?
+      library.require = true unless library.require?
 
       if library.expires
         now = new Date
         library.expirationDate = now.setTime(now.getTime() + library.expires*60*60*1000)
 
-      if library.type == 'js' || library.type == 'css'
+      if library.type == 'js' || library.type == 'css' || library.type == 'text'
         @requires.set[library.key] = library
       else
         console.error "Unknown asset type for #{library.url} – skipped"
@@ -200,7 +201,7 @@ class @Loada
 
     if @options.localStorage && @storage[library.key] && library.localStorage
       progress?.set library.key, 100
-      @_inject @storage[library.key]
+      @_inject @storage[library.key] if @storage[library.key].require
       @_loadGroup group, progress, callback
     else
       method = if @options.localStorage
@@ -210,7 +211,7 @@ class @Loada
 
       @[method] library, progress, =>
         @storage[library.key] = library if @options.localStorage
-        @_inject library
+        @_inject library if library.require
         @_loadGroup group, progress, callback
 
   #
@@ -270,7 +271,7 @@ class @Loada
       script.defer = true
       script.text = library.source
       $head.appendChild script
-    else
+    else if library.type == 'css'
       style = document.createElement "style"
       style.innerHTML = library.source
       $head.appendChild style

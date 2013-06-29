@@ -116,7 +116,7 @@ describe "Loada", ->
 
     it "gets single from cache", ->
       localStorage['loada.*'] = JSON.stringify 
-        'foo.js': {}
+        'foo.js': {require: true}
 
       @set.setup()
       callback = sinon.spy()
@@ -130,7 +130,7 @@ describe "Loada", ->
         expect(@server.requests.length).toEqual 0
         expect(callback.callCount).toEqual 1
         expect(@set._inject.callCount).toEqual 1
-        expect(@set._inject.args[0][0]).toEqual {}
+        expect(@set._inject.args[0][0]).toEqual {require: true}
 
     it "gets single from net", ->
       callback = sinon.spy()
@@ -152,6 +152,7 @@ describe "Loada", ->
           type: 'js'
           source: 'foobar'
           localStorage: true
+          require: true
 
         expect(@server.requests.length).toEqual 1
         expect(@set.storage['foo.js']).toEqual library
@@ -300,3 +301,18 @@ describe "Loada", ->
       expect(window.TEST).toEqual 1
 
       delete window.TEST
+
+  it "loads text", ->
+    set = Loada.set()
+    server = sinon.fakeServer.create()
+    set.require url: 'foo', type: 'text'
+
+    set.load()
+
+    waits 0
+
+    runs ->
+      expect(server.requests.length).toEqual 1
+      server.requests[0].respond 200, {}, 'foobar'
+
+      expect(set.get 'foo').toEqual 'foobar'
