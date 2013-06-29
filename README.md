@@ -15,6 +15,8 @@ Use it to:
 
 The Loada is available through [Bower](http://bower.io) as `loada`. 
 
+If you are in the Ruby environment with `sprockets` around – use `gem 'loada'` and `#= require 'loada'`.
+
 Alternatively you can download [minified version](https://raw.github.com/inossidabile/loada/master/lib/loada.min.js). But you should not. Seriously. Use package managers. Please.
 
 ## Basic usage
