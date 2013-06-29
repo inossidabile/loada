@@ -1,6 +1,6 @@
 {
   "name": "loada",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Browser assets preloader with the support of localStorage-based caching and progress tracking",
   "repository": "",
   "keywords": [
