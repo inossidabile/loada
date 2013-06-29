@@ -3,12 +3,21 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-connect'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-release'
 
   grunt.initConfig
+    watch:
+      source:
+        files: ['src/**/*.coffee']
+        tasks: ['coffee:source']
+      specs:
+        files: ['spec/**/*.coffee']
+        tasks: ['coffee:specs']
+
     coffee:
-      loada:
+      source:
         files:
           'lib/loada.js': 'src/loada.coffee'
 
@@ -22,6 +31,9 @@ module.exports = (grunt) ->
       source:
         files:
           src: ['src/**/*.coffee']
+        options:
+          'max_line_length':
+            level: 'ignore'
 
     connect:
       specs:
@@ -41,9 +53,12 @@ module.exports = (grunt) ->
           host: 'http://localhost:8888/'
           keepRunner: true
           outfile: "index.html"
+          vendor: 'components/sinonjs/sinon.js'
           specs: ".grunt/spec/**/*_spec.js"
           helpers: ".grunt/spec/helpers/**/*.js"
         src: "lib/loada.js"
+
+  grunt.registerTask 'default', ['coffee', 'connect', 'jasmine:core:build', 'watch']
 
   grunt.registerTask 'test', ['coffee', 'connect', 'coffeelint', 'jasmine', 'bowerize']
 

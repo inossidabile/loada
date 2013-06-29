@@ -5,5 +5,8 @@
   "ignore": [
     "Gruntfile.coffee",
     "package.json"
-  ]
+  ],
+  "devDependencies": {
+    "sinonjs": "~1.7.1"
+  }
 }

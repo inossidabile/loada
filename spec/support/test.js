@@ -1,0 +1,1 @@
+window.TEST = 1
