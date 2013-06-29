@@ -151,7 +151,7 @@ describe "Loada", ->
           key: 'foo.js'
           type: 'js'
           source: 'foobar'
-          cache: true
+          localStorage: true
 
         expect(@server.requests.length).toEqual 1
         expect(@set.storage['foo.js']).toEqual library

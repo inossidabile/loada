@@ -1,7 +1,8 @@
 $head = document.getElementsByTagName("head")[0]
 
 #
-# Loada is the kickass javascript loader supporting localStorage and progress tracking.
+# Loada is the kickass in-browser assets (JS/CSS) loader supporting localStorage
+# and progress tracking.
 #
 # @see https://github.com/inossidabile/loada/
 #
@@ -120,7 +121,7 @@ class @Loada
     for library in libraries
       library.key  ||= library.url
       library.type ||= library.url?.split('.').pop()
-      library.cache  = true unless library.cache?
+      library.localStorage = true unless library.localStorage?
 
       if library.expires
         now = new Date
@@ -197,7 +198,7 @@ class @Loada
 
     return callback() unless library
 
-    if @options.localStorage && @storage[library.key] && library.cache
+    if @options.localStorage && @storage[library.key] && library.localStorage
       progress?.set library.key, 100
       @_inject @storage[library.key]
       @_loadGroup group, progress, callback
