@@ -11,6 +11,12 @@ Use it to:
   * Manually control assets cache
   * Preload and manage your code partially in the background (templates, extensions, etc...)
 
+## Installation
+
+The Loada is available through [Bower](http://bower.io) as `loada`. 
+
+Alternatively you can download [minified version](https://raw.github.com/inossidabile/loada/master/lib/loada.min.js). But you should not. Seriously. Use package managers. Please.
+
 ## Basic usage
 
 The Loada splits your dependencies into sets. Each set is an instance of The Loada. Each set is an atomic cache part: if the number of cached assets changes – unused caches get busted on the next run keeping your **localStorage** space usage low. You can i.e. have *main* set, the core of application, and *templates* that will be treated and cached separately.
