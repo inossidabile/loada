@@ -1,5 +1,8 @@
 # The Loada
 
+[![NPM version](https://badge.fury.io/js/loada.png)](http://badge.fury.io/js/loada)
+[![Build Status](https://travis-ci.org/inossidabile/loada.png?branch=master)](https://travis-ci.org/inossidabile/loada)
+
 The kickass in-browser assets (JS/CSS/Text) loader with the support of localStorage caching and progress tracking. The Loada is here to give you control over assets loading order, parallelism, cache expiration and actual code evaluation. 
 
 Use it to:
@@ -10,7 +13,7 @@ Use it to:
 
 ## Basic usage
 
-The Loada splits your dependencies into sets. Each set is an instance of The Loada. Each set is atomic in field of caching: if the number of cached assets changes – unused caches get busted on the next run keeping your **localStorage** space usage low. You can i.e. have *main* set, the core of application, and *templates* that will be treated and cached separately.
+The Loada splits your dependencies into sets. Each set is an instance of The Loada. Each set is an atomic cache part: if the number of cached assets changes – unused caches get busted on the next run keeping your **localStorage** space usage low. You can i.e. have *main* set, the core of application, and *templates* that will be treated and cached separately.
 
 ---
 
