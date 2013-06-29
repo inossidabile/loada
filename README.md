@@ -65,3 +65,7 @@ loader.load
   # And this one will run as soon as all assets are around
   complete: -> # ...
 ```
+
+## History
+
+Loada is an extraction from [Joosy](http://joosy.ws) core.
