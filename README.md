@@ -92,7 +92,7 @@ set = Loada.set 'name',
   * **prefix**: changes localStorage keys prefix (defaults to `loada`)
   * **localStorage**: globally turns off the localStorage cache and (unfortunately) detailed progress tracking
 
-**Important note**: The Loada is only able to work with JS with localStorage mode turned off.
+**Important note**: The Loada is only able to work with JS when localStorage mode is disabled.
 
 ### Asset-level options
 
