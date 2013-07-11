@@ -146,10 +146,10 @@ set.clear()
 
 Loada is an extraction from [Joosy](http://joosy.ws) core.
 
-## Credits
+## Maintainers
 
-* Boris Staal ([@_inossidabile](http://twitter.com/#!/_inossidabile)) [![endorse](http://api.coderwall.com/inossidabile/endorsecount.png)](http://coderwall.com/inossidabile)
+* Boris Staal, [@inossidabile](http://staal.io)
 
-## LICENSE
+## License
 
 It is free software, and may be redistributed under the terms of MIT license.
