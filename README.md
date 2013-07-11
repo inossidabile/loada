@@ -19,6 +19,8 @@ If you are in the Ruby environment with `sprockets` around – use `gem 'loada'`
 
 Alternatively you can download [minified version](https://raw.github.com/inossidabile/loada/master/lib/loada.min.js). But you should not. Seriously. Use package managers. Please.
 
+[![endorse](http://api.coderwall.com/inossidabile/endorsecount.png)](http://coderwall.com/inossidabile)
+
 ## Basic usage
 
 The Loada splits your dependencies into sets. Each set is an instance of The Loada. Each set is an atomic cache part: if the number of cached assets changes – unused caches get busted on the next run keeping your **localStorage** space usage low. You can i.e. have *main* set, the core of application, and *templates* that will be treated and cached separately.
