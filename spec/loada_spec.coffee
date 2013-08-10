@@ -1,10 +1,17 @@
 describe "Loada", ->
 
+  beforeEach ->
+    Loada.debug = false
+    window.sandbox = {}
+
+  afterEach ->
+    delete window.sandbox
+
   it "initializes properly", ->
     set = Loada.set(undefined, localStorage: false)
     expect(set.set).toEqual '*'
     expect(set.options.localStorage).toBeFalsy()
-    expect(set.storage).toBeUndefined()
+    expect(set.storage).toEqual {}
 
     localStorage['loada.foo'] = JSON.stringify('foo': 'bar')
 
@@ -74,6 +81,10 @@ describe "Loada", ->
       @set.require url: 'foo.js', size: 100
       @set.require url: 'bar.js'
       @set.require url: 'baz.js'
+      @server = sinon.fakeServer.create()
+
+    afterEach ->
+      @server.restore()
 
     it "zerofills with no progress tracking", ->
       callback = sinon.spy()
@@ -83,18 +94,16 @@ describe "Loada", ->
 
     it "gets sizes with progress tracking", ->
       callback = sinon.spy()
-      server   = sinon.fakeServer.create()
       @set._ensureSizes true, callback
 
       waits 0
 
       runs ->
-        expect(server.requests[0].url).toEqual 'bar.js'
-        expect(server.requests[1].url).toEqual 'baz.js'
+        expect(@server.requests[0].url).toEqual 'bar.js'
+        expect(@server.requests[1].url).toEqual 'baz.js'
 
-        server.requests[0].respond 200, {'Content-Length': '100'}, ''
-        server.requests[1].respond 200, {}, ''
-        server.restore()
+        @server.requests[0].respond 200, {'Content-Length': '100'}, ''
+        @server.requests[1].respond 200, {}, ''
 
       waits 0
 
@@ -111,7 +120,6 @@ describe "Loada", ->
       sinon.stub @set, '_inject'
 
     afterEach ->
-      @set._inject.restore()
       @server.restore()
 
     it "gets single from cache", ->
@@ -130,7 +138,7 @@ describe "Loada", ->
         expect(@server.requests.length).toEqual 0
         expect(callback.callCount).toEqual 1
         expect(@set._inject.callCount).toEqual 1
-        expect(@set._inject.args[0][0]).toEqual {require: true}
+        expect(@set._inject.args[0][0]).toEqual [{require: true}]
 
     it "gets single from net", ->
       callback = sinon.spy()
@@ -151,14 +159,14 @@ describe "Loada", ->
           key: 'foo.js'
           type: 'js'
           source: 'foobar'
-          localStorage: true
+          cache: true
           require: true
 
         expect(@server.requests.length).toEqual 1
         expect(@set.storage['foo.js']).toEqual library
         expect(callback.callCount).toEqual 1
         expect(@set._inject.callCount).toEqual 1
-        expect(@set._inject.args[0][0]).toEqual library
+        expect(@set._inject.args[0][0]).toEqual [library]
 
     it "orders properly", ->
       @set.require(
@@ -166,23 +174,32 @@ describe "Loada", ->
         { url: 'bar.js' }
       )
       @set.require url: 'baz.js'
+      @set._inject.restore()
 
-      @set._loadGroup @set.requires.input[0], null, ->
-      @set._loadGroup @set.requires.input[1], null, ->
-
-      waits 0
-
-      runs ->
-        @server.requests[0].respond 200, {}, 'foobar'
-        @server.requests[1].respond 200, {}, 'foobar'
-        @server.requests[2].respond 200, {}, 'foobar'
+      @set._loadGroup @set.requires.input[0], null, firstGroup = sinon.spy()
+      @set._loadGroup @set.requires.input[1], null, secondGroup = sinon.spy()
 
       waits 0
 
       runs ->
-        expect(@server.requests[0].url).toEqual 'foo.js'
-        expect(@server.requests[1].url).toEqual 'baz.js'
-        expect(@server.requests[2].url).toEqual 'bar.js'
+        @server.requests[0].respond 200, {}, 'window.sandbox.TEST1 = 1'
+        @server.requests[2].respond 200, {}, 'window.sandbox.TEST2 = 1'
+
+      waits 0
+
+      runs ->
+        expect(firstGroup.callCount).toEqual 0
+        expect(secondGroup.callCount).toEqual 1
+        expect(window.sandbox.TEST1).toBeUndefined()
+        expect(window.sandbox.TEST2).toEqual 1
+        @server.requests[1].respond 200, {}, 'window.sandbox.TEST1 = 2'
+
+      waits 0
+
+      runs ->
+        expect(firstGroup.callCount).toEqual 1
+        expect(secondGroup.callCount).toEqual 1
+        expect(window.sandbox.TEST1).toEqual 2
 
     describe "progress", ->
       it "tracks with cache", ->
@@ -227,30 +244,23 @@ describe "Loada", ->
           expect(progress.set.args[0]).toEqual ['foo.js', 100]
           expect(progress.set.args[1]).toEqual ['bar.js', 100]
 
-  it "loads through inlining", ->
-    window.TEST = 0
-
+  it "inlines", ->
     set = Loada.set()
-    server = sinon.fakeServer.create()
     callback = sinon.spy()
 
-    set._loadInline {url: 'spec/support/test.js', key: 'test.js', type: 'js'}, null, callback
+    set._loadInline {url: 'spec/support/test1_1.js', key: 'test.js', type: 'js'}, null, callback
 
     waits 100
 
     runs ->
       expect(callback.callCount).toEqual 1
-      expect(window.TEST).toEqual 1
-      delete window.TEST
+      expect(window.sandbox.TEST).toEqual 1
 
   it "injects", ->
-    window.TEST = 0
-
     set = Loada.set()
-    set._inject source: 'window.TEST = 1', type: 'js'
+    set._inject source: 'window.sandbox.TEST = 1', type: 'js', require: true
 
-    expect(window.TEST).toEqual 1
-    delete window.TEST
+    expect(window.sandbox.TEST).toEqual 1
 
   it "caches", ->
     set = Loada.set()
@@ -281,13 +291,11 @@ describe "Loada", ->
       set._inject.restore()
 
   it "loads", ->
-    window.TEST = 0
-
     progress = sinon.spy()
     success = sinon.spy()
 
     set = Loada.set()
-    set.require url: 'spec/support/test.js'
+    set.require url: 'spec/support/test1_1.js'
     set.load
       progress: progress
       success: success
@@ -298,21 +306,73 @@ describe "Loada", ->
       expect(progress.callCount).toEqual 1
       expect(progress.args[0][0]).toEqual 100
       expect(success.callCount).toEqual 1
-      expect(window.TEST).toEqual 1
-
-      delete window.TEST
+      expect(window.sandbox.TEST).toEqual 1
 
   it "loads text", ->
     set = Loada.set()
-    server = sinon.fakeServer.create()
-    set.require url: 'foo', type: 'text'
-
+    set.require url: 'spec/support/text', key: 'foo', type: 'text'
     set.load()
 
-    waits 0
+    waits 100
 
     runs ->
-      expect(server.requests.length).toEqual 1
-      server.requests[0].respond 200, {}, 'foobar'
-
       expect(set.get 'foo').toEqual 'foobar'
+
+  describe "collisions", ->
+
+    it "loads in correct order with localStorage", ->
+      progress = sinon.spy()
+      success = sinon.spy()
+
+      set = Loada.set()
+      set.require {url: 'spec/support/test1_1.js'}, {url: 'spec/support/test1_2.js'}
+      set.load
+        progress: progress
+        success: success
+
+      waits 100
+
+      runs ->
+        expect(progress.callCount).toEqual 2
+        expect(progress.args[0][0]).toEqual 50
+        expect(progress.args[1][0]).toEqual 100
+        expect(success.callCount).toEqual 1
+        expect(window.sandbox.TEST).toEqual 2
+
+    it "loads in correct order with inlining", ->
+      progress = sinon.spy()
+      success = sinon.spy()
+
+      set = Loada.set('*', localStorage: false)
+      set.require {url: 'spec/support/test1_1.js'}, {url: 'spec/support/test1_2.js'}
+      set.load
+        progress: progress
+        success: success
+
+      waits 100
+
+      runs ->
+        expect(progress.callCount).toEqual 2
+        expect(progress.args[0][0]).toEqual 50
+        expect(progress.args[1][0]).toEqual 100
+        expect(success.callCount).toEqual 1
+        expect(window.sandbox.TEST).toEqual 2
+
+    it "loads in correct order when mixed", ->
+      progress = sinon.spy()
+      success = sinon.spy()
+
+      set = Loada.set('*')
+      set.require {url: 'spec/support/test1_1.js'}, {url: 'spec/support/test1_2.js', cache: false}
+      set.load
+        progress: progress
+        success: success
+
+      waits 100
+
+      runs ->
+        expect(progress.callCount).toEqual 2
+        expect(progress.args[0][0]).toEqual 50
+        expect(progress.args[1][0]).toEqual 100
+        expect(success.callCount).toEqual 1
+        expect(window.sandbox.TEST).toEqual 2

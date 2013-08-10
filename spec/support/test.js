@@ -1,1 +1,0 @@
-window.TEST = 1

@@ -1,0 +1,1 @@
+window.sandbox.TEST2 = 1

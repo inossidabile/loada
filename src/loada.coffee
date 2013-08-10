@@ -55,25 +55,8 @@ class @Loada
 
       if typeof(@storage) == 'string'
         @storage = JSON.parse(localStorage[@key])
-
-  #
-  # Saves current set state to localStorage
-  #
-  save: ->
-    localStorage[@key] = JSON.stringify @storage
-
-  #
-  # Removes localStorage entry bound to current set
-  #
-  clear: -> delete localStorage[@key]
-
-  #
-  # Gets raw source of an asset
-  #
-  # @param key [String]       Key of the asset
-  #
-  get: (key) ->
-    @storage[key]?.source
+    else
+      @storage = {}
 
   #
   # Cleans up current state
@@ -84,21 +67,46 @@ class @Loada
   #   * not found in the current requires list
   #
   expire: ->
-    now = new Date
+    if @options.localStorage
+      now = new Date
 
-    byDate = (library) =>
-      library.expirationDate && new Date(library.expirationDate) <= now
+      byDate = (library) =>
+        library.expirationDate && new Date(library.expirationDate) <= now
 
-    byExistance = (library) =>
-      !@requires.set[key]
+      byExistance = (library) =>
+        !@requires.set[key]
 
-    byRevision = (library) =>
-      @requires.set[key].revision != library.revision
+      byRevision = (library) =>
+        @requires.set[key].revision != library.revision
 
-    for key, library of @storage
+      for key, library of @storage
 
-      if byDate(library) || byExistance(library) || byRevision(library)
-        delete @storage[key]
+        if byDate(library) || byExistance(library) || byRevision(library)
+          delete @storage[key]
+
+  #
+  # Saves current set state to localStorage
+  #
+  save: ->
+    if @options.localStorage
+      localStorage[@key] = JSON.stringify @storage
+
+  #
+  # Removes localStorage entry bound to current set
+  #
+  clear: ->
+    if @options.localStorage
+      delete localStorage[@key]
+
+  #
+  # Gets raw source of an asset
+  #
+  # @param key [String]       Key of the asset
+  #
+  get: (key) ->
+    @storage[key]?.source
+
+
 
   #
   # Adds library that should be loaded
@@ -121,7 +129,7 @@ class @Loada
     for library in libraries
       library.key  ||= library.url
       library.type ||= library.url?.split('.').pop()
-      library.localStorage = true unless library.localStorage?
+      library.cache = true unless library.cache?
       library.require = true unless library.require?
 
       if library.expires
@@ -147,7 +155,7 @@ class @Loada
   #
   load: (callbacks) ->
     callbacks ||= {}
-    @expire() if @options.localStorage
+    @expire()
 
     progress = new @Progress(@requires.length, callbacks.progress)
     loaders  = 0
@@ -195,24 +203,27 @@ class @Loada
   # @private
   #
   _loadGroup: (group, progress, callback) =>
-    library = group.shift()
+    results = []
 
-    return callback() unless library
-
-    if @options.localStorage && @storage[library.key] && library.localStorage
-      progress?.set library.key, 100
-      @_inject @storage[library.key] if @storage[library.key].require
-      @_loadGroup group, progress, callback
-    else
-      method = if @options.localStorage
-        "_loadAJAX"
+    for library in group
+      if @storage[library.key] && library.cache
+        progress?.set library.key, 100
+        results.push @storage[library.key]
       else
-        "_loadInline"
+        method = if @options.localStorage || !library.require
+          "_loadAJAX"
+        else
+          "_loadInline"
 
-      @[method] library, progress, =>
-        @storage[library.key] = library if @options.localStorage
-        @_inject library if library.require
-        @_loadGroup group, progress, callback
+        @[method] library, progress, =>
+          results.push library
+          if results.length == group.length
+            @_inject results
+            callback()
+
+    if results.length == group.length
+      @_inject results
+      callback()
 
   #
   # Loads one asset by AJAX query and stores it into instance
@@ -221,6 +232,7 @@ class @Loada
   #
   _loadAJAX: (library, progress, callback) ->
     xhr = @_ajax 'GET', library.url, (xhr) =>
+      @storage[library.key] = library if library.cache
       library.source = xhr.responseText
       clearInterval poller
       progress?.set library.key, 100
@@ -265,16 +277,19 @@ class @Loada
   #
   # @private
   #
-  _inject: (library) ->
-    if library.type == 'js'
-      script = document.createElement "script"
-      script.defer = true
-      script.text = library.source
-      $head.appendChild script
-    else if library.type == 'css'
-      style = document.createElement "style"
-      style.innerHTML = library.source
-      $head.appendChild style
+  _inject: (libraries) ->
+    libraries = [].concat(libraries)
+
+    for library in libraries when library.require && library.source
+      if library.type == 'js'
+        script = document.createElement "script"
+        script.defer = true
+        script.text = library.source
+        $head.appendChild script
+      else if library.type == 'css'
+        style = document.createElement "style"
+        style.innerHTML = library.source
+        $head.appendChild style
 
   #
   # Starring custom XHR wrapper!
@@ -287,8 +302,8 @@ class @Loada
     else
       xhr = new ActiveXObject 'Microsoft.XMLHTTP'
 
-    xhr.open method, url, 1
     xhr.onreadystatechange = -> callback?(xhr) if xhr.readyState > 3
+    xhr.open method, url, 1
     xhr.send()
 
     xhr
