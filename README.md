@@ -2,7 +2,6 @@
 
 [![NPM version](https://badge.fury.io/js/loada.png)](http://badge.fury.io/js/loada)
 [![Build Status](https://travis-ci.org/inossidabile/loada.png?branch=master)](https://travis-ci.org/inossidabile/loada)
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/inossidabile/loada/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
 The kickass in-browser assets (JS/CSS/Text) loader with the support of localStorage caching and progress tracking. The Loada is here to give you control over assets loading order, parallelism, cache expiration and actual code evaluation. 
 
@@ -156,3 +155,5 @@ Loada is an extraction from [Joosy](http://joosy.ws) core.
 ## License
 
 It is free software, and may be redistributed under the terms of MIT license.
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/inossidabile/loada/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
